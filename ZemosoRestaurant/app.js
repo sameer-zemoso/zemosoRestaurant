@@ -26,30 +26,32 @@ function searchTables() {
   }
 }
 
-document.addEventListener("dragstart", function (event) {
-  // The dataTransfer.setData() method sets the data type and the value of the dragged data
-  event.dataTransfer.setData("Text", event.target.id);
-  // console.log("event-transfer-id" + event.target.id);
-
-  var data = event.dataTransfer.getData("Text");
-  // console.log(document.getElementById(data));
-  let temp = event.target.innerHTML;
-
+function getPriceFromMenu(temp) {
   let endingIndex = temp.indexOf("</p>");
   let startingIndex = endingIndex - 6;
 
-  let price = temp.substring(startingIndex, endingIndex);
+  return temp.substring(startingIndex, endingIndex);
+}
+function getItemNameFromMenu(temp) {
+  let startingIndex = temp.indexOf("<h2>");
+  let endingIndex = temp.indexOf("</h2>");
 
-  startingIndex = temp.indexOf("<h2>");
-  endingIndex = temp.indexOf("</h2>");
+  return temp.substring(startingIndex + 4, endingIndex);
+}
 
-  let itemName = temp.substring(startingIndex + 4, endingIndex);
+document.addEventListener("dragstart", function (event) {
+  // The dataTransfer.setData() method sets the data type and the value of the dragged data
+  event.dataTransfer.setData("Text", event.target.id);
+  var data = event.dataTransfer.getData("Text");
 
-  console.log(price);
+  // console.log(document.getElementById(data));
+  let temp = event.target.innerHTML;
 
-  // console.log(event.target.innerHTML);
-  // let itemNameStartingIndex = temp.indexOf("<h2>")+4;
-  // let
+  let price = getPriceFromMenu(temp); 
+
+  let itemName = getItemNameFromMenu(temp); //temp.substring(startingIndex + 4, endingIndex);
+
+  // console.log("Dragged Item Price: "+price);
 
   localStorage.setItem("price", price);
   localStorage.setItem("current-item", itemName);
@@ -72,41 +74,42 @@ document.addEventListener("dragleave", function (event) {
   }
 });
 
+function getPriceAttributeOfTable(temp) {
+  let priceIdStartingIndex = temp.indexOf("total");
+  let priceIdEndingIndex = temp.indexOf("price") + 7;
+  return temp.substring(priceIdStartingIndex, priceIdEndingIndex);
+}
+function getTableNameFromTable(temp) {
+  let tableNameStartIndex = temp.indexOf("<h2>") + 4;
+  let tableNameEndIndex = temp.indexOf("</h2>");
+  return temp.substring(tableNameStartIndex, tableNameEndIndex);
+}
+function getTotalItemsAttributeFromTable(temp) {
+  let itemsStartingIndex = temp.indexOf("total-items");
+  let itemsEndingIndex = temp.indexOf("total-items") + 13;
+  return temp.substring(itemsStartingIndex, itemsEndingIndex);
+}
+
 document.addEventListener("drop", function (event) {
   event.preventDefault();
   var arr = [];
   // event.dataTransfer.dropEffect = 'move';
   var data = event.dataTransfer.getData("Text");
-  // console.log(document.getElementById(data));
-  // console.log(event.dataTransfer.getData("Text"));
-  // console.log(event.target.className);
+
   if (event.target.className == "table") {
     let temp = event.target.innerHTML;
 
-    let priceIdStartingIndex = temp.indexOf("total");
-    let priceIdEndingIndex = temp.indexOf("price") + 7;
-
-    let tableNameStartIndex = temp.indexOf("<h2>") + 4;
-    let tableNameEndIndex = temp.indexOf("</h2>");
-
-    let itemsStartingIndex = temp.indexOf("total-items");
-    let itemsEndingIndex = temp.indexOf("total-items") + 13;
-
-    let itemsId = temp.substring(itemsStartingIndex, itemsEndingIndex);
+    let itemsId = getTotalItemsAttributeFromTable(temp);
     let itemsCount = Number(document.getElementById(itemsId).innerHTML);
 
-    let tableName = temp
-      .substring(tableNameStartIndex, tableNameEndIndex)
-      .toLowerCase();
+    let tableName = getTableNameFromTable(temp).toLowerCase();
 
     let currentItem = localStorage.getItem("current-item");
 
-    let priceId = temp.substring(priceIdStartingIndex, priceIdEndingIndex);
-    // console.log("price-id=" + priceId);
-    //   let idObj = document.getElementsById(priceId);
+    let priceId = getPriceAttributeOfTable(temp);
+
     let existingPrice = document.getElementById(priceId).innerHTML;
-    // console.log("pricehtml"+document.getElementById(priceId).innerHTML);
-    // let currentItem = localStorage.getItem("current-item");
+
     let itemsInLocalStorage = [];
     if (existingPrice === "0") {
       arr.push(currentItem);
@@ -129,44 +132,37 @@ document.addEventListener("drop", function (event) {
 
     console.log("itemsInLocalStorage:" + itemsInLocalStorage[0]);
 
-    let presentPrice = localStorage.getItem("price");
+    let presentPrice = localStorage.getItem("price"); 
+    console.log("Dropped Item Price: "+presentPrice);
+
     let newPrice = Number(existingPrice) + Number(presentPrice);
-    console.log(newPrice);
 
     document.getElementById(priceId).innerHTML = newPrice;
     document.getElementById(itemsId).innerHTML = itemsCount;
-    localStorage.setItem(tableName + "-total-price", newPrice);
-    // localStorage.setItem(tableName + "-itemsCount", itemsCount);
 
+    localStorage.setItem(tableName + "-total-price", newPrice);
     event.target.style.border = "";
   }
 });
 
 function updateData() {
   let items = document.getElementsByClassName("table");
-
   for (i = 0; i < items.length; i++) {
     let temp = items[i].innerHTML;
-    let tableNameStartIndex = temp.indexOf("<h2>") + 4;
-    let tableNameEndIndex = temp.indexOf("</h2>");
-    let tableName = temp
-      .substring(tableNameStartIndex, tableNameEndIndex)
-      .toLowerCase();
+    let tableName = getTableNameFromTable(temp).toLowerCase();
     let totalPrice = localStorage.getItem(tableName + "-total-price");
+    //after deleting the table from local storage
     if(localStorage.getItem(tableName) === null) {
       document.getElementById("total-price-" + (i + 1)).innerHTML = 0;
       document.getElementById("total-items-" + (i + 1)).innerHTML = 0;
     }
+    //if table is not having any items yet! loop must ignore that case and move to next table
     if (totalPrice === null) {
-    //   document.getElementById("total-price-" + (i + 1)).innerHTML = 0;
-    // document.getElementById("total-items-" + (i + 1)).innerHTML = 0;
-      // break;
       continue;
     }
     let totalItems = JSON.parse(localStorage.getItem(tableName));
     document.getElementById("total-price-" + (i + 1)).innerHTML = totalPrice;
-    document.getElementById("total-items-" + (i + 1)).innerHTML =
-      totalItems.length;
+    document.getElementById("total-items-" + (i + 1)).innerHTML = totalItems.length;
   }
 }
 
@@ -184,11 +180,6 @@ for (i = 0; i < tEvent.length; i++) {
 
     document.getElementById("table-no").innerHTML = tableName;
     console.log(tableName);
-    // document.getElementById("container").style.opacity = 0.5;
-    // document.getElementById(tableName.toLowerCase()).style.backgroundColor =
-    //   "yellow";
-    // document.getElementById("order-details").style.opacity = 1;
-    // document.getElementById("order-details").style.visibility = "visible";
     loadOrders();
   });
 }
@@ -196,9 +187,8 @@ for (i = 0; i < tEvent.length; i++) {
 document.getElementById("close-button").addEventListener("click", function () {
   document.getElementById("order-details").style.opacity = 0;
   document.getElementById("container").style.opacity = 1;
-  document.getElementById(tableName.toLowerCase()).style.backgroundColor =
-    "white";
-  tableName = "";
+  document.getElementById(tableName.toLowerCase()).style.backgroundColor = "white";
+  // tableName = "";
 });
 // var order = '';
 function loadOrders() {
@@ -206,21 +196,13 @@ function loadOrders() {
   let tableItems = [];
   tableItems = JSON.parse(localStorage.getItem(tableName.toLowerCase()));
   console.log("tableItems= " + tableItems);
-
-  // console.log("tableItems[0]= "+tableItems[0]);
-
-  // let sNo=1;
-
-  // if(tableItems === null) {
-  //   break;
-  // }
-  // $("#orders").empty();
   if (tableItems !== null) {
     document.getElementById("container").style.opacity = 0.5;
     document.getElementById(tableName.toLowerCase()).style.backgroundColor =
       "yellow";
     document.getElementById("order-details").style.opacity = 1;
     document.getElementById("order-details").style.visibility = "visible";
+    document.getElementById("check-out").style.visibility = "hidden";
     $("#orders").empty();
     // document.getElementById("orders").innerHTML="";
     if ($("#orders").is(":empty")) {
@@ -231,13 +213,6 @@ function loadOrders() {
     let order = "";
     for (i = 0; i < tableItems.length; i++) {
       let price = localStorage.getItem(tableItems[i]);
-      // let temp = tableItems[i];
-      // let exists = order.includes(temp);
-      // console.log(exists);
-      // let newOrder = '';
-
-      // let visited = false;
-      // if(!order.includes(temp)) {
       order +=
         "<tr id='" +
         tableItems[i] +
@@ -248,14 +223,6 @@ function loadOrders() {
         "</th><th style='font-weight: 500'>" +
         price +
         "</th> <th style='text-align: left'><p style='font-size: xx-small; margin-bottom: 0' class='servings'>Number of Servings</p><input type='number' id='quantity' name='count' class='counter' onchange='changeServings(event)' value=1 min=1 style='border-top: none; border-left: none; border-right: none; border-bottom: 1px solid rgb(63, 62, 62);'/></th><th onclick='onDelete(event)'><i class='fas fa-trash'></i></th></tr>";
-      // sNo++;
-      // $(newOrder).appendTo("#orders");
-      // visited = true;
-      // }
-      // if(visited) {
-      // order+=newOrder;
-      // $(newOrder).appendTo("#orders");
-      // }
     }
     $(order).appendTo("#orders");
     let newtotalPrice =
@@ -268,10 +235,6 @@ function loadOrders() {
     document.getElementById("total-price").innerHTML = totalactualPrice;
   } else {
     alert("your dont have any current orders on this table");
-    // var emptyOrder =
-    //   " <tr style='padding: 32px;'><th style='width: 100%;'>You orders list is empty! :( <br> please close this window and add a few </th></tr>";
-    // $(emptyOrder).appendTo("#orders");
-    // break;
   }
 
   // order='';
@@ -283,10 +246,7 @@ function onDelete(event) {
   console.log("onDelteTable= " + tableNo);
   let row = document.getElementById(deletingOrderTableName).innerHTML;
   // console.log(row);
-  let itemsStartingIndex = row.indexOf("25%") + 5;
-  let thIndex = row.indexOf("</th>");
-  let itemsEndingIndex = row.indexOf("</th>", thIndex + 1);
-  let name = row.substring(itemsStartingIndex, itemsEndingIndex);
+  let name = getItemNameFromOrders(row);
   console.log(name);
 
   let jsonObject = JSON.parse(localStorage.getItem(tableNo));
@@ -300,6 +260,13 @@ function onDelete(event) {
   // console.log(jsonObject[0]);
 }
 
+function getItemNameFromOrders(row) {
+  let itemsStartingIndex = row.indexOf("25%") + 5;
+  let thIndex = row.indexOf("</th>");
+  let itemsEndingIndex = row.indexOf("</th>", thIndex + 1);
+  return row.substring(itemsStartingIndex, itemsEndingIndex);
+}
+
 function changeServings(event) {
   let value = event.target.value;
   console.log("servings values= " + value);
@@ -308,40 +275,16 @@ function changeServings(event) {
   console.log("onDelteTable= " + tableNo);
   let row = document.getElementById(servingsTable).innerHTML;
   // console.log(row);
-  let itemsStartingIndex = row.indexOf("25%") + 5;
-  let thIndex = row.indexOf("</th>");
-  let itemsEndingIndex = row.indexOf("</th>", thIndex + 1);
-  let ItemName = row.substring(itemsStartingIndex, itemsEndingIndex);
+  let ItemName = getItemNameFromOrders(row);
   console.log(ItemName);
 
   let itemPrice = localStorage.getItem(ItemName);
   console.log(itemPrice);
 
-  // let totalactualPrice = localStorage.getItem(tableNo+"-total-price");
-
-  // let sum = Number(totalactualPrice)+Number((value*itemPrice));
-
   localStorage.removeItem(tableNo + "-total-price");
 
   localStorage.setItem(tableNo + "-" + ItemName + "-count", value);
   updateTotalPrice(tableNo);
-  // let tableItems = [];
-  // tableItems = JSON.parse(localStorage.getItem(tableNo));
-  // let totalactualPrice = 0;
-  // for(i=0;i<tableItems.length;i++) {
-  //   let tableItem = tableItems[i];
-  //   itemPrice = localStorage.getItem(tableItem);
-  //   console.log("tableItem= "+tableItem);
-  //   let newValue = localStorage.getItem(tableNo+"-"+tableItem+"-count");
-  //   console.log("itemavalue="+localStorage.getItem(tableNo+"-"+tableItem+"-count")+"newValue= "+newValue);
-  //   totalactualPrice = Number(totalactualPrice) +  Number(newValue*itemPrice);
-  //   console.log("totalactualPrice= "+totalactualPrice);
-  // }
-  // localStorage.setItem(tableNo+"-total-price",totalactualPrice);
-
-  // document.getElementById("total-price").innerHTML = totalactualPrice;
-  // let getIndex = tableNo.indexOf("-")+1;
-  // document.getElementById("total-price-"+tableNo.substring(getIndex)).innerHTML =  totalactualPrice;
 }
 
 function updateTotalPrice(tableNo) {
@@ -371,7 +314,7 @@ function updateTotalPrice(tableNo) {
   ).innerHTML = totalactualPrice;
 }
 
-window.onload(updateData());
+window.onload = updateData();
 // updateData();
 
 let bill = document.getElementById("bill");
