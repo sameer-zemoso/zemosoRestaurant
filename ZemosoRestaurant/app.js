@@ -213,6 +213,20 @@ function loadOrders() {
     let order = "";
     for (i = 0; i < tableItems.length; i++) {
       let price = localStorage.getItem(tableItems[i]);
+      let itemServings = localStorage.getItem(tableName.toLowerCase()+"-"+tableItems[i]+"-count");
+      console.log(itemServings);
+      if(itemServings >= 1) {
+        order +=
+        "<tr id='" +
+        tableItems[i] +
+        "'> <th style=' font-size: small; font-weight: 500; width:5%'>" +
+        (i + 1) +
+        "</th><th style='font-size: small; font-weight: 500; width:25%'>" +
+        tableItems[i] +
+        "</th><th style='font-weight: 500'>" +
+        price +
+        "</th> <th style='text-align: left'><p style='font-size: xx-small; margin-bottom: 0' class='servings'>Number of Servings</p><input type='number' id='quantity' name='count' class='counter-"+tableName.toLowerCase()+"' onchange='changeServings(event)' value='"+itemServings+"' min=1 style='border-top: none; border-left: none; border-right: none; border-bottom: 1px solid rgb(63, 62, 62);'/></th><th onclick='onDelete(event)'><i class='fas fa-trash'></i></th></tr>";
+      } else {
       order +=
         "<tr id='" +
         tableItems[i] +
@@ -222,11 +236,13 @@ function loadOrders() {
         tableItems[i] +
         "</th><th style='font-weight: 500'>" +
         price +
-        "</th> <th style='text-align: left'><p style='font-size: xx-small; margin-bottom: 0' class='servings'>Number of Servings</p><input type='number' id='quantity' name='count' class='counter' onchange='changeServings(event)' value=1 min=1 style='border-top: none; border-left: none; border-right: none; border-bottom: 1px solid rgb(63, 62, 62);'/></th><th onclick='onDelete(event)'><i class='fas fa-trash'></i></th></tr>";
+        "</th> <th style='text-align: left'><p style='font-size: xx-small; margin-bottom: 0' class='servings'>Number of Servings</p><input type='number' id='quantity' name='count' class='counter-"+tableName.toLowerCase()+"' onchange='changeServings(event)' value=1 min=1 style='border-top: none; border-left: none; border-right: none; border-bottom: 1px solid rgb(63, 62, 62);'/></th><th onclick='onDelete(event)'><i class='fas fa-trash'></i></th></tr>";
+      }
+
     }
     $(order).appendTo("#orders");
     let newtotalPrice =
-      "<tr><th></th><th></th><th style='font-size: small; font-weight: 500 '>Total-Price= <span id='total-price'>0.00</span></th></tr>";
+      "<tr><th></th><th></th><th style='font-size: small; font-weight: 500 '>Total: <span id='total-price'>0.00</span></th></tr>";
     $(newtotalPrice).appendTo("#orders");
     let totalactualPrice = localStorage.getItem(
       tableName.toLowerCase() + "-total-price"
@@ -239,6 +255,7 @@ function loadOrders() {
 
   // order='';
 }
+
 
 function onDelete(event) {
   let deletingOrderTableName = event.srcElement.parentNode.parentNode.id;
