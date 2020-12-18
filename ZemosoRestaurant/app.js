@@ -16,12 +16,12 @@ function searchTables() {
   var input, filter, li, i;
   input = document.getElementById("tablesSearch");
   filter = input.value.toUpperCase();
-  li = document.getElementsByClassName("table");
+  li = document.getElementsByClassName("table-name-tag");
   for (i = 0; i < li.length; i++) {
     if (li[i].innerText.toUpperCase().includes(filter)) {
-      li[i].style.display = "";
+      li[i].parentNode.style.display = "";
     } else {
-      li[i].style.display = "none";
+      li[i].parentNode.style.display = "none";
     }
   }
 }
@@ -80,7 +80,7 @@ function getPriceAttributeOfTable(temp) {
   return temp.substring(priceIdStartingIndex, priceIdEndingIndex);
 }
 function getTableNameFromTable(temp) {
-  let tableNameStartIndex = temp.indexOf("<h2>") + 4;
+  let tableNameStartIndex = temp.indexOf("</h2>") - 7;
   let tableNameEndIndex = temp.indexOf("</h2>");
   return temp.substring(tableNameStartIndex, tableNameEndIndex);
 }
@@ -173,7 +173,7 @@ for (i = 0; i < tEvent.length; i++) {
   let thisEvent = tEvent[i];
   tEvent[i].addEventListener("click", function fireOrdersList() {
     let temp = thisEvent.innerHTML;
-    let tableNameStartIndex = temp.indexOf("<h2>") + 4;
+    let tableNameStartIndex = temp.indexOf("</h2>") - 7;
     let tableNameEndIndex = temp.indexOf("</h2>");
 
     tableName = temp.substring(tableNameStartIndex, tableNameEndIndex);
@@ -364,7 +364,7 @@ document
     var arrLS = []; // Array to hold the keys
     // Iterate over localStorage and insert the keys that meet the condition into arr
     for (var i = 0; i < localStorage.length; i++) {
-      if (localStorage.key(i).substring(0, 7) == tableName.toLowerCase()) {
+      if (localStorage.key(i).substring(0, 7) === tableName.toLowerCase()) {
         arrLS.push(localStorage.key(i));
       }
     }
